@@ -1,0 +1,1 @@
+# symulacja-zalamania-swiatla-WM
