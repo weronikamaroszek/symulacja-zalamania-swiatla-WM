@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symulacja załamania i odbicia światła</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        #kontener {
+            display: flex;
+            justify-content: center;
+        }
+        #legenda {
+            width: 150px;
+            padding: 10px;
+            text-align: left;
+        }
+        #legenda div {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+        #legenda span {
+            display: inline-block;
+            width: 20px;
+            height: 10px;
+            margin-right: 10px;
+        }
+        canvas {
+            border: 1px solid #000;
+            margin: 20px auto;
+            display: block;
+            background: linear-gradient(to bottom, #FFFFFF 50%, #87CEFA 50%);
+        }
+        label, button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+<h1>Symulacja załamania i odbicia światła</h1>
+<p>Wprowadź dane do obliczeń:</p>
+<label>Kąt padania (°): <input type="number" id="kat_padania" value="30" min="0" max="90"></label>
+<label>Współczynnik n₁: <input type="number" id="n1" value="1.0" step="0.01"></label>
+<label>Współczynnik n₂: <input type="number" id="n2" value="1.33" step="0.01"></label>
+<br>
+<button onclick="symuluj()">Oblicz</button>
+
+<div id="kontener">
+    <div id="legenda">
+        <h3>Legenda</h3>
+        <div><span style="background-color: red;"></span> Promień padający</div>
+        <div><span style="background-color: green;"></span> Promień odbity</div>
+        <div><span style="background-color: blue;"></span> Promień załamany</div>
+        <div><span style="background-color: black;"></span> Powierzchnia odbicia</div>
+        <div><span style="border: 1px dashed black;"></span> Linia prostopadła</div>
+    </div>
+    <canvas id="płótno" width="600" height="400"></canvas>
+</div>
+<p id="wynik"></p>
+
+<script>
+    function stopnieNaRadiany(stopnie) {
+        return stopnie * Math.PI / 180;
+    }
+
+    function symuluj() {
+        const katPadaniaStopnie = parseFloat(document.getElementById("kat_padania").value);
+        const n1 = parseFloat(document.getElementById("n1").value);
+        const n2 = parseFloat(document.getElementById("n2").value);
+
+        if (n1 <= 0 || n2 <= 0 || katPadaniaStopnie < 0 || katPadaniaStopnie > 90) {
+            alert("Wprowadź poprawne wartości.");
+            return;
+        }
+
+        const katPadaniaRadiany = stopnieNaRadiany(katPadaniaStopnie);
+        const sinKataZalamania = (n1 / n2) * Math.sin(katPadaniaRadiany);
+        let katZalamaniaRadiany = 0;
+
+        let komunikat = "";
+        if (sinKataZalamania > 1) {
+            komunikat = "Brak załamania - całkowite odbicie!";
+        } else {
+            katZalamaniaRadiany = Math.asin(sinKataZalamania);
+            komunikat = `Kąt załamania: ${(katZalamaniaRadiany * 180 / Math.PI).toFixed(2)}°`;
+        }
+
+        // Rysowanie na Canvas
+        const płótno = document.getElementById("płótno");
+        const kontekst = płótno.getContext("2d");
+        kontekst.clearRect(0, 0, płótno.width, płótno.height);
+
+        const x0 = 300; // Punkt centralny
+        const y0 = 200; // Linia graniczna
+        const długość = 150;
+
+        // Linia pionowa prostopadła
+        kontekst.setLineDash([5, 5]);
+        kontekst.beginPath();
+        kontekst.moveTo(x0, 0);
+        kontekst.lineTo(x0, płótno.height);
+        kontekst.strokeStyle = "black";
+        kontekst.stroke();
+        kontekst.setLineDash([]);
+
+        // Powierzchnia odbicia
+        kontekst.beginPath();
+        kontekst.moveTo(0, y0);
+        kontekst.lineTo(płótno.width, y0);
+        kontekst.strokeStyle = "black";
+        kontekst.lineWidth = 3;
+        kontekst.stroke();
+
+        // Promień padający (czerwony)
+        kontekst.beginPath();
+        kontekst.moveTo(x0, y0);
+        kontekst.lineTo(x0 - długość * Math.tan(katPadaniaRadiany), y0 - długość);
+        kontekst.strokeStyle = "red";
+        kontekst.lineWidth = 2;
+        kontekst.stroke();
+
+        // Promień odbity (zielony)
+        kontekst.beginPath();
+        kontekst.moveTo(x0, y0);
+        kontekst.lineTo(x0 + długość * Math.tan(katPadaniaRadiany), y0 - długość);
+        kontekst.strokeStyle = "green";
+        kontekst.stroke();
+
+        // Promień załamany (niebieski)
+        if (sinKataZalamania <= 1) {
+            kontekst.beginPath();
+            kontekst.moveTo(x0, y0);
+            kontekst.lineTo(x0 + długość * Math.tan(katZalamaniaRadiany), y0 + długość);
+            kontekst.strokeStyle = "blue";
+            kontekst.stroke();
+        }
+
+        // Wyświetlenie wyniku
+        document.getElementById("wynik").innerText = komunikat;
+    }
+</script>
+</body>
+</html>
